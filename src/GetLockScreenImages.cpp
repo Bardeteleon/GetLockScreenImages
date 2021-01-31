@@ -6,32 +6,29 @@
 #include <filesystem> // settings for C++17:  Project > Properties > C/C++ > Language > C++ Language Standard
 #include <sstream>
 #include <regex>
-#include "jpegsize.h"
 #include <Lmcons.h>
 #include <sstream>
+#include "jpegsize.h"
 #include "TinyEXIF.h"
 
 namespace fs = std::filesystem;
 
-std::string folder_name_source = "C:/Users/Konstantin Gerks/AppData/Local/Packages/Microsoft.Windows.ContentDeliveryManager_cw5n1h2txyewy/LocalState/Assets";
-//string folder_name_source = "C:/Users/Konstantin Gerks/Pictures/_Wallpapers/_RenameTool/InitData";
+const std::string user_name_placeholder = "NameOfCurrentUserXYZ";
+const std::string folder_name_source_template = "C:/Users/" + user_name_placeholder + "/AppData/Local/Packages/Microsoft.Windows.ContentDeliveryManager_cw5n1h2txyewy/LocalState/Assets";
+const std::string folder_name_destination = "LockScreens";
+const std::string folder_name_destination_upright = "Upright";
+const std::string folder_name_destination_landscape = "Landscape";
+const std::string file_name_generic = "Image_";
+const std::string file_extension = ".jpg";
 
-std::string folder_name_destination = "LockScreens";
-std::string folder_name_destination_upright = "Upright";
-std::string folder_name_destination_landscape = "Landscape";
-
-std::string file_name_generic = "Image_";
-
-std::string file_extension = ".jpg";
-
-//vector<string> file_paths;
-
-void ReplaceStringInPlace(std::string& subject, const std::string& search,	const std::string& replace) {
+std::string ReplaceStringInPlace(const std::string& subject, const std::string& search, const std::string& replace) {
 	size_t pos = 0;
-	while ((pos = subject.find(search, pos)) != std::string::npos) {
-		subject.replace(pos, search.length(), replace);
+	std::string result = subject;
+	while ((pos = result.find(search, pos)) != std::string::npos) {
+		result.replace(pos, search.length(), replace);
 		pos += replace.length();
 	}
+	return result;
 }
 
 class EXIFStreamFile : public TinyEXIF::EXIFStream {
@@ -60,7 +57,7 @@ class EXIFStreamFile : public TinyEXIF::EXIFStream {
 		}
 };
 
-int find_maximum_image_index(std::string rel_path, std::string file_name_generic, std::string file_extension) {
+int find_maximum_image_index(const std::string& rel_path, const std::string& file_name_generic, const std::string& file_extension) {
 	int max_counter = 0;
 	int count_image_existing = 0;
 	for (auto& p : fs::directory_iterator(rel_path))
@@ -69,7 +66,6 @@ int find_maximum_image_index(std::string rel_path, std::string file_name_generic
 		std::regex pat{ pattern_string };
 		std::smatch matches;
 		std::string path_string = p.path().string();
-		// cout << path_string << "\n";
 
 		/* check file path format */
 		if (std::regex_search(path_string, matches, pat))
@@ -108,8 +104,7 @@ int main()
 	GetUserName(username, &username_len);
 	std::wstring username_w(&username[0]);
 	std::string username_str(username_w.begin(), username_w.end());
-	//cout << username_str;
-	ReplaceStringInPlace(folder_name_source, "Konstantin Gerks", username_str);
+	std::string folder_name_source = ReplaceStringInPlace(folder_name_source_template, user_name_placeholder, username_str);
 
 	/* get path of .exe */
 	TCHAR path[1040]; // MAX_PATH
@@ -148,17 +143,6 @@ int main()
 	int counter_upright = max_index_upright + 1;
 	for (auto& p : fs::directory_iterator(folder_name_source))
 	{
-		/* read from files */
-		//ifstream file(p.path());
-		//char line[100];
-		//file.getline(line, 100);
-		//cout << line << "\n";
-
-		/* store file paths in a list */
-		//file_paths.push_back(p.path().string());
-
-		//cout << "\n\nFile: " << p.path().filename() << "\n";
-
 		/* source file */
 		std::string source_path_string = p.path().string();
 		ReplaceStringInPlace(source_path_string, "/", "\\");
@@ -246,7 +230,6 @@ int main()
 		/* copy file and add .jpg extension */
 		try {
 			if (fs::copy_file(source_path, desired_path))
-			//if(fs::copy_file("Lock Screens\\test.txt", "Lock Screens\\test_copy2.txt"))
 			{
 				//cout << "Image copied: " << desired_path.filename() << "\n";
 			}
@@ -267,5 +250,4 @@ int main()
 	std::cin.get();
 
 	return 0;
-
 }
