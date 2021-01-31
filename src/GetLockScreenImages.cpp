@@ -92,6 +92,57 @@ int find_maximum_image_index(const std::string& rel_path, const std::string& fil
 	return max_counter;
 }
 
+std::wstring GetCurrentWindowsUserName(void)
+{
+	TCHAR username[UNLEN + 1];
+	DWORD username_len = UNLEN + 1;
+	GetUserName(username, &username_len);
+	std::wstring username_w(&username[0]);
+
+	return username_w;
+}
+
+std::string ConvertWStringToString(const std::wstring& w_string)
+{
+	return std::string(w_string.begin(), w_string.end());
+}
+
+std::string GetCurrentWorkingDirectory(void)
+{
+	TCHAR path[1040]; // MAX_PATH
+	GetCurrentDirectory(sizeof(path), path);
+	fs::path local_path = path;
+	return local_path.string();
+}
+
+bool TryCreateImageDirectories(const std::string& destination)
+{
+	bool success;
+
+	if (CreateDirectoryA(std::string(destination + "\\" + folder_name_destination).c_str(), NULL))
+	{
+		std::cout << " - Created a LockScreens folder next to the .exe\n";
+		if (!CreateDirectoryA(std::string(destination + "\\" + folder_name_destination + "\\" + folder_name_destination_landscape).c_str(), NULL)
+			|| !CreateDirectoryA(std::string(destination + "\\" + folder_name_destination + "\\" + folder_name_destination_upright).c_str(), NULL))
+		{
+			std::cout << " - Error: Not able to create subfolders.";
+			success = false;
+		}
+	}
+	else if (GetLastError() == ERROR_ALREADY_EXISTS)
+	{
+		std::cout << " - Detected an already existing LockScreens folder\n";
+		success = true;
+	}
+	else
+	{
+		std::cout << " - Error: Not able to create the LockScreens folder.\n-> Termination\n";
+		success = false;
+	}
+
+	return success;
+}
+
 int main()
 {
 	std::cout << "Welcome!\n";
@@ -99,41 +150,17 @@ int main()
 	std::cout << "These are the images you see when you log into your computer.\n";
 
 	/* replace current user name in source path*/
-	TCHAR username[UNLEN + 1];
-	DWORD username_len = UNLEN + 1;
-	GetUserName(username, &username_len);
-	std::wstring username_w(&username[0]);
-	std::string username_str(username_w.begin(), username_w.end());
-	std::string folder_name_source = ReplaceStringInPlace(folder_name_source_template, user_name_placeholder, username_str);
+	std::wstring username_w{ GetCurrentWindowsUserName() };
+	std::string username_str{ ConvertWStringToString(username_w) };
+	std::string folder_name_source{ ReplaceStringInPlace(folder_name_source_template, user_name_placeholder, username_str) };
 
 	/* get path of .exe */
-	TCHAR path[1040]; // MAX_PATH
-	GetCurrentDirectory(sizeof(path), path);
-	fs::path local_path = path;
-	//local_path = local_path.remove_filename(); // not needed
-	std::string local_path_string = local_path.string();
-	//ReplaceStringInPlace(local_path_string, "\\", "/");
+	std::string current_working_dir = GetCurrentWorkingDirectory();
 
 	/* LockScreens folder */
-	if (CreateDirectoryA(std::string(local_path_string + "\\" + folder_name_destination).c_str(), NULL))
-	{
-		std::cout << " - Created a LockScreens folder next to the .exe\n";
-		if (!CreateDirectoryA(std::string(local_path_string + "\\" + folder_name_destination + "\\" + folder_name_destination_landscape).c_str(), NULL)
-			|| !CreateDirectoryA(std::string(local_path_string + "\\" + folder_name_destination + "\\" + folder_name_destination_upright).c_str(), NULL))
-		{
-			std::cout << " - Error: Not able to create subfolders.";
-			return 0;
-		}
-	}
-	else if (GetLastError() == ERROR_ALREADY_EXISTS)
-	{
-		std::cout << " - Detected an already existing LockScreens folder\n";
-	}
-	else
-	{
-		std::cout << " - Error: Not able to create the LockScreens folder.\n-> Termination\n";
-		return 0;
-	}
+	bool success = TryCreateImageDirectories(current_working_dir);
+	if (!success)
+		return 1;
 
 	int max_index_landscape = find_maximum_image_index(folder_name_destination + "\\" + folder_name_destination_landscape, file_name_generic, file_extension);
 	int max_index_upright = find_maximum_image_index(folder_name_destination + "\\" + folder_name_destination_upright, file_name_generic, file_extension);
@@ -145,7 +172,7 @@ int main()
 	{
 		/* source file */
 		std::string source_path_string = p.path().string();
-		ReplaceStringInPlace(source_path_string, "/", "\\");
+		source_path_string = ReplaceStringInPlace(source_path_string, "/", "\\");
 		fs::path source_path = source_path_string;
 
 		/* try to read image size
@@ -224,7 +251,7 @@ int main()
 
 		/* create desired path with file rename */
 		std::ostringstream outStream;
-		outStream << local_path_string << "\\" << folder_name_destination << "\\" << folder_name_destination_type << "\\" << file_name_generic << current_counter << file_extension;
+		outStream << current_working_dir << "\\" << folder_name_destination << "\\" << folder_name_destination_type << "\\" << file_name_generic << current_counter << file_extension;
 		fs::path desired_path = outStream.str();
 
 		/* copy file and add .jpg extension */
