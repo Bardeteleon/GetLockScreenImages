@@ -2,14 +2,13 @@
 #include <Windows.h>
 #include <winerror.h>
 #include <iostream>
-#include <fstream>
 #include <filesystem> // settings for C++17:  Project > Properties > C/C++ > Language > C++ Language Standard
 #include <sstream>
 #include <regex>
 #include <Lmcons.h>
 #include <sstream>
 #include "jpegsize.h"
-#include "TinyEXIF.h"
+#include "EXIFStreamFile.h"
 
 namespace fs = std::filesystem;
 
@@ -30,32 +29,6 @@ std::string ReplaceStringInPlace(const std::string& subject, const std::string& 
 	}
 	return result;
 }
-
-class EXIFStreamFile : public TinyEXIF::EXIFStream {
-	private:
-		std::ifstream file;
-		std::vector<uint8_t> buffer;
-
-	public:
-		explicit EXIFStreamFile(const char* fileName)
-			: file(fileName, std::ifstream::in | std::ifstream::binary) {
-		}
-
-		bool IsValid() const override {
-			return file.is_open();
-		}
-
-		const uint8_t* GetBuffer(unsigned desiredLength) override {
-			buffer.resize(desiredLength);
-			if (!file.read((char*)buffer.data(), desiredLength))
-				return NULL;
-			return buffer.data();
-		}
-
-		bool SkipBuffer(unsigned desiredLength) override {
-			return (bool)file.seekg(desiredLength, std::ios::cur);
-		}
-};
 
 int find_maximum_image_index(const std::string& rel_path, const std::string& file_name_generic, const std::string& file_extension) {
 	int max_counter = 0;

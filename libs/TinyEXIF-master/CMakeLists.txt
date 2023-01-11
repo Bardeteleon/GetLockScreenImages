@@ -1,6 +1,7 @@
 set(sources 
     TinyEXIF.cpp 
-    TinyEXIF.h)
+    TinyEXIF.h
+    EXIFStreamFile.h)
 
 add_library(tinyexif STATIC ${sources})
 
