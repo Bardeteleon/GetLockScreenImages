@@ -7,8 +7,9 @@
 #include <regex>
 #include <Lmcons.h>
 #include <sstream>
-#include "jpegsize.h"
 #include "EXIFStreamFile.h"
+#include "jpegsize.h"
+#include "ImageMetadata.h"
 
 namespace fs = std::filesystem;
 
@@ -141,69 +142,21 @@ int main()
 	/* Get all files in source folder */
 	int counter_landscape = max_index_landscape + 1;
 	int counter_upright = max_index_upright + 1;
-	for (auto& p : fs::directory_iterator(folder_name_source))
+	for (auto& directory_entry : fs::directory_iterator(folder_name_source))
 	{
 		/* source file */
-		std::string source_path_string = p.path().string();
+		std::string source_path_string = directory_entry.path().string();
 		source_path_string = ReplaceStringInPlace(source_path_string, "/", "\\");
-		fs::path source_path = source_path_string;
 
 		/* try to read image size
 		   continue with next file if:
 			- file not a jpeg
 			- image size smaller 1000 pixel
 		*/
-		int image_width = 0;
-		int image_height = 0;
-
-		bool exif_abort = false;
-		EXIFStreamFile img_stream(source_path_string.c_str());
-		if (!img_stream.IsValid())
-		{
-			//cout << "EXIF: Can not open " << source_path_string << "\n";
-			exif_abort = true;
-		}
-		else 
-		{
-			TinyEXIF::EXIFInfo img_exif(img_stream);
-			if (!img_exif.Fields)
-			{
-				//cout << "EXIF: No EXIF or XMP metadata\n";
-				exif_abort = true;
-			}
-			else
-			{
-				image_width = img_exif.ImageWidth;
-				image_height = img_exif.ImageHeight;
-				if (image_width < 1000 || image_height < 1000)
-				{
-					//cout << "EXIF: Image too small\n";
-					exif_abort = true;
-				}
-			}
-		}
-
-		bool jpegsize_abort = false;
-		FILE* p_file;
-		fopen_s(&p_file, source_path_string.c_str(), "r");
-		if (scanhead(p_file, &image_width, &image_height))
-		{
-			//cout << "Size: " << image_width << " - " << image_height << "\n";
-			if (image_width <= 1000 || image_height <= 1000)
-			{
-				//cout << "jpegsize: Image too small\n";
-				jpegsize_abort = true;
-			}
-		}
-		else
-		{
-			//cout << "jpegsize: File not detected as jpeg\n";
-			jpegsize_abort = true;
-		}
-		fclose(p_file);
+		ImageMetadata image_meta(source_path_string);
 
 		// file not detected as image (jpeg and exif data) or too small image size
-		if (exif_abort && jpegsize_abort)
+		if (!image_meta.IsValid())
 		{
 			//cout << "File not detected as image (jpeg or exif data) or it is too small (<1000 pixels)\n";
 			continue;
@@ -211,15 +164,15 @@ int main()
 
 		std::string folder_name_destination_type = "unset";
 		int current_counter = 0;
-		if (image_height > image_width) {
-			folder_name_destination_type = folder_name_destination_upright;
-			current_counter = counter_upright;
-			counter_upright++;
-		}
-		else {
+		if (image_meta.IsLandscape()){
 			folder_name_destination_type = folder_name_destination_landscape;
 			current_counter = counter_landscape;
 			counter_landscape++;
+		}
+		else {
+			folder_name_destination_type = folder_name_destination_upright;
+			current_counter = counter_upright;
+			counter_upright++;
 		}
 
 		/* create desired path with file rename */
@@ -228,6 +181,7 @@ int main()
 		fs::path desired_path = outStream.str();
 
 		/* copy file and add .jpg extension */
+		fs::path source_path = source_path_string;
 		try {
 			if (fs::copy_file(source_path, desired_path))
 			{
