@@ -136,15 +136,9 @@ int main()
 	if (!success)
 		return 1;
 
-	int max_index_landscape = find_maximum_image_index(folder_name_destination + "\\" + folder_name_destination_landscape, file_name_generic, file_extension);
-	int max_index_upright = find_maximum_image_index(folder_name_destination + "\\" + folder_name_destination_upright, file_name_generic, file_extension);
-
-	/* Get all files in source folder */
-	int counter_landscape = max_index_landscape + 1;
-	int counter_upright = max_index_upright + 1;
-	for (auto& directory_entry : fs::directory_iterator(folder_name_source))
+	std::vector<ImageMetadata> images;
+	for (const auto& directory_entry : fs::directory_iterator(folder_name_source))
 	{
-		/* source file */
 		std::string source_path_string = directory_entry.path().string();
 		source_path_string = ReplaceStringInPlace(source_path_string, "/", "\\");
 
@@ -153,10 +147,19 @@ int main()
 			- file not a jpeg
 			- image size smaller 1000 pixel
 		*/
-		ImageMetadata image_meta(source_path_string);
+		images.emplace_back(source_path_string);
+	}
 
+	int max_index_landscape = find_maximum_image_index(folder_name_destination + "\\" + folder_name_destination_landscape, file_name_generic, file_extension);
+	int max_index_upright = find_maximum_image_index(folder_name_destination + "\\" + folder_name_destination_upright, file_name_generic, file_extension);
+
+	/* Get all files in source folder */
+	int counter_landscape = max_index_landscape + 1;
+	int counter_upright = max_index_upright + 1;
+	for (const auto& image : images)
+	{
 		// file not detected as image (jpeg and exif data) or too small image size
-		if (!image_meta.IsValid())
+		if (!image.IsValid())
 		{
 			//cout << "File not detected as image (jpeg or exif data) or it is too small (<1000 pixels)\n";
 			continue;
@@ -164,7 +167,7 @@ int main()
 
 		std::string folder_name_destination_type = "unset";
 		int current_counter = 0;
-		if (image_meta.IsLandscape()){
+		if (image.IsLandscape()){
 			folder_name_destination_type = folder_name_destination_landscape;
 			current_counter = counter_landscape;
 			counter_landscape++;
@@ -181,7 +184,7 @@ int main()
 		fs::path desired_path = outStream.str();
 
 		/* copy file and add .jpg extension */
-		fs::path source_path = source_path_string;
+		fs::path source_path = image.GetPath();
 		try {
 			if (fs::copy_file(source_path, desired_path))
 			{
