@@ -1,20 +1,18 @@
 #include <stdio.h>
-#include <Windows.h>
 #include <winerror.h>
 #include <iostream>
 #include <filesystem> // settings for C++17:  Project > Properties > C/C++ > Language > C++ Language Standard
 #include <sstream>
 #include <regex>
-#include <Lmcons.h>
 #include <sstream>
+#include <Windows.h>
 #include "EXIFStreamFile.h"
 #include "jpegsize.h"
 #include "ImageMetadata.h"
+#include "LockscreenLocator.h"
 
 namespace fs = std::filesystem;
 
-const std::string user_name_placeholder = "NameOfCurrentUserXYZ";
-const std::string folder_name_source_template = "C:/Users/" + user_name_placeholder + "/AppData/Local/Packages/Microsoft.Windows.ContentDeliveryManager_cw5n1h2txyewy/LocalState/Assets";
 const std::string folder_name_destination = "LockScreens";
 const std::string folder_name_destination_upright = "Upright";
 const std::string folder_name_destination_landscape = "Landscape";
@@ -56,26 +54,11 @@ int find_maximum_image_index(const std::string& rel_path, const std::string& fil
 	return max_counter;
 }
 
-std::wstring GetCurrentWindowsUserName(void)
-{
-	TCHAR username[UNLEN + 1];
-	DWORD username_len = UNLEN + 1;
-	GetUserName(username, &username_len);
-	std::wstring username_w(&username[0]);
-
-	return username_w;
-}
-
-std::string ConvertWStringToString(const std::wstring& w_string)
-{
-	return std::string(w_string.begin(), w_string.end());
-}
-
 std::string GetCurrentWorkingDirectory(void)
 {
 	TCHAR path[1040]; // MAX_PATH
 	GetCurrentDirectory(sizeof(path), path);
-	fs::path local_path = path;
+	std::filesystem::path local_path = path;
 	return local_path.string();
 }
 
@@ -113,11 +96,6 @@ int main()
 	std::cout << "This program delivers all Windows 10 lockscreen wallpapers it can find in the system.\n";
 	std::cout << "These are the images you see when you log into your computer.\n";
 
-	/* replace current user name in source path*/
-	std::wstring username_w{ GetCurrentWindowsUserName() };
-	std::string username_str{ ConvertWStringToString(username_w) };
-	std::string folder_name_source{ std::regex_replace(folder_name_source_template, std::regex(user_name_placeholder), username_str) };
-
 	/* get path of .exe */
 	std::string current_working_dir = GetCurrentWorkingDirectory();
 
@@ -126,19 +104,8 @@ int main()
 	if (!success)
 		return 1;
 
-	std::vector<ImageMetadata> images;
-	for (const auto& directory_entry : fs::directory_iterator(folder_name_source))
-	{
-		std::string source_path_string = directory_entry.path().string();
-		source_path_string = std::regex_replace(source_path_string, std::regex("/"), "\\");
-
-		/* try to read image size
-		   continue with next file if:
-			- file not a jpeg
-			- image size smaller 1000 pixel
-		*/
-		images.emplace_back(source_path_string);
-	}
+	LockscreenLocator locator{};
+	locator.Run();
 
 	int max_index_landscape = find_maximum_image_index(folder_name_destination + "\\" + folder_name_destination_landscape, file_name_generic, file_extension);
 	int max_index_upright = find_maximum_image_index(folder_name_destination + "\\" + folder_name_destination_upright, file_name_generic, file_extension);
@@ -146,7 +113,7 @@ int main()
 	/* Get all files in source folder */
 	int counter_landscape = max_index_landscape + 1;
 	int counter_upright = max_index_upright + 1;
-	for (const auto& image : images)
+	for (const auto& image : locator.GetLockscreenMetadata())
 	{
 		// file not detected as image (jpeg and exif data) or too small image size
 		if (!image.IsValid())
