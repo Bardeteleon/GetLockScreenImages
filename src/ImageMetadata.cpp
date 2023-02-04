@@ -28,11 +28,6 @@ ImageMetadata ImageMetadata::TryReadAsJpeg(const std::string& path)
     if (scanhead(p_file, &image_width, &image_height))
     {
         //cout << "Size: " << image_width << " - " << image_height << "\n";
-        if (image_width <= 1000 || image_height <= 1000)
-        {
-            //cout << "jpegsize: Image too small\n";
-            jpegsize_abort = true;
-        }
     }
     else
     {
@@ -69,11 +64,6 @@ ImageMetadata ImageMetadata::TryReadAsExif(const std::string& path)
         {
             image_width = img_exif.ImageWidth;
             image_height = img_exif.ImageHeight;
-            if (image_width < 1000 || image_height < 1000)
-            {
-                //cout << "EXIF: Image too small\n";
-                exif_abort = true;
-            }
         }
     }
 

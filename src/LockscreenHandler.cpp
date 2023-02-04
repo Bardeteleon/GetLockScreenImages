@@ -92,13 +92,6 @@ void LockscreenHandler::IntegrateNewLockscreens(const std::vector<ImageMetadata>
 	int counter_upright = max_index_upright_ + 1;
 	for (const auto& image : lockscreens)
 	{
-		// file not detected as image (jpeg and exif data) or too small image size
-		if (!image.IsValid())
-		{
-			//cout << "File not detected as image (jpeg or exif data) or it is too small (<1000 pixels)\n";
-			continue;
-		}
-
 		std::string folder_name_destination_type = "unset";
 		int current_counter = 0;
 		if (image.IsLandscape()){

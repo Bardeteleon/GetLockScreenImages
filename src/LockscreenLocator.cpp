@@ -1,6 +1,7 @@
 
 #include <Windows.h>
 #include <Lmcons.h>
+#include <algorithm>
 #include <filesystem>
 #include <regex>
 
@@ -8,7 +9,12 @@
 
 void LockscreenLocator::Run(void)
 {
-    /* replace current user name in source path*/
+    LocatePotentialLockscreens();
+    FilterRealLockscreens();
+}
+
+void LockscreenLocator::LocatePotentialLockscreens(void)
+{
 	std::wstring username_w{ GetCurrentWindowsUserName() };
 	std::string username_str{ ConvertWStringToString(username_w) };
 	std::string folder_name_source{ std::regex_replace(folder_name_source_template_, std::regex(user_name_placeholder_), username_str) };
@@ -18,13 +24,15 @@ void LockscreenLocator::Run(void)
 		std::string source_path_string = directory_entry.path().string();
 		source_path_string = std::regex_replace(source_path_string, std::regex("/"), "\\");
 
-		/* try to read image size
-		   continue with next file if:
-			- file not a jpeg
-			- image size smaller 1000 pixel
-		*/
 		potential_lockscreens_.emplace_back(source_path_string);
 	}
+}
+
+void LockscreenLocator::FilterRealLockscreens(void)
+{
+    potential_lockscreens_.erase(std::remove_if(potential_lockscreens_.begin(), potential_lockscreens_.end(), [](const ImageMetadata& image){
+        return !image.IsValid() || image.GetHeight() < 1000 || image.GetWidth() < 1000;
+    }), potential_lockscreens_.end());
 }
 
 std::vector<ImageMetadata> LockscreenLocator::GetLockscreenMetadata(void)

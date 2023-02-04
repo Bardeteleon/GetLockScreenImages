@@ -16,6 +16,9 @@ class LockscreenLocator
 
   private:
 
+    void LocatePotentialLockscreens(void);
+    void FilterRealLockscreens(void);
+
     std::wstring GetCurrentWindowsUserName(void);
     std::string ConvertWStringToString(const std::wstring& w_string);
 
