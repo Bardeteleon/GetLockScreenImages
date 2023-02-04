@@ -1,94 +1,6 @@
-#include <stdio.h>
-#include <winerror.h>
 #include <iostream>
-#include <filesystem> // settings for C++17:  Project > Properties > C/C++ > Language > C++ Language Standard
-#include <sstream>
-#include <regex>
-#include <sstream>
-#include <Windows.h>
-#include "EXIFStreamFile.h"
-#include "jpegsize.h"
-#include "ImageMetadata.h"
 #include "LockscreenLocator.h"
-
-namespace fs = std::filesystem;
-
-const std::string folder_name_destination = "LockScreens";
-const std::string folder_name_destination_upright = "Upright";
-const std::string folder_name_destination_landscape = "Landscape";
-const std::string file_name_generic = "Image_";
-const std::string file_extension = ".jpg";
-
-int find_maximum_image_index(const std::string& rel_path, const std::string& file_name_generic, const std::string& file_extension) {
-	int max_counter = 0;
-	int count_image_existing = 0;
-	for (auto& p : fs::directory_iterator(rel_path))
-	{
-		std::string pattern_string = "(" + file_name_generic + "\\d+(?=" + file_extension + "$))";
-		std::regex pat{ pattern_string };
-		std::smatch matches;
-		std::string path_string = p.path().string();
-
-		/* check file path format */
-		if (std::regex_search(path_string, matches, pat))
-		{
-			std::string file_number_string = matches[0].str().replace(0, file_name_generic.length(), "");
-			int file_number_int = std::stoi(file_number_string);
-			if (file_number_int > max_counter)
-			{
-				max_counter = file_number_int;
-			}
-			//cout << "Results: " << file_number_int << "\n";
-		}
-		else
-		{
-			//cout << " - File does not match the expected sturcture: " << path_string << "\n";
-			continue;
-		}
-		count_image_existing++;
-	}
-	if (max_counter > 0)
-	{
-		std::cout << " - Found " << count_image_existing << " images in the folder '" << rel_path << "' with maximum number " << max_counter << "\n";
-	}
-	return max_counter;
-}
-
-std::string GetCurrentWorkingDirectory(void)
-{
-	TCHAR path[1040]; // MAX_PATH
-	GetCurrentDirectory(sizeof(path), path);
-	std::filesystem::path local_path = path;
-	return local_path.string();
-}
-
-bool TryCreateImageDirectories(const std::string& destination)
-{
-	bool success;
-
-	if (CreateDirectoryA(std::string(destination + "\\" + folder_name_destination).c_str(), NULL))
-	{
-		std::cout << " - Created a LockScreens folder next to the .exe\n";
-		if (!CreateDirectoryA(std::string(destination + "\\" + folder_name_destination + "\\" + folder_name_destination_landscape).c_str(), NULL)
-			|| !CreateDirectoryA(std::string(destination + "\\" + folder_name_destination + "\\" + folder_name_destination_upright).c_str(), NULL))
-		{
-			std::cout << " - Error: Not able to create subfolders.";
-			success = false;
-		}
-	}
-	else if (GetLastError() == ERROR_ALREADY_EXISTS)
-	{
-		std::cout << " - Detected an already existing LockScreens folder\n";
-		success = true;
-	}
-	else
-	{
-		std::cout << " - Error: Not able to create the LockScreens folder.\n-> Termination\n";
-		success = false;
-	}
-
-	return success;
-}
+#include "LockscreenHandler.h"
 
 int main()
 {
@@ -96,69 +8,13 @@ int main()
 	std::cout << "This program delivers all Windows 10 lockscreen wallpapers it can find in the system.\n";
 	std::cout << "These are the images you see when you log into your computer.\n";
 
-	/* get path of .exe */
-	std::string current_working_dir = GetCurrentWorkingDirectory();
-
-	/* LockScreens folder */
-	bool success = TryCreateImageDirectories(current_working_dir);
-	if (!success)
-		return 1;
+	LockscreenHandler handler{};
+	handler.Init();
 
 	LockscreenLocator locator{};
 	locator.Run();
 
-	int max_index_landscape = find_maximum_image_index(folder_name_destination + "\\" + folder_name_destination_landscape, file_name_generic, file_extension);
-	int max_index_upright = find_maximum_image_index(folder_name_destination + "\\" + folder_name_destination_upright, file_name_generic, file_extension);
-
-	/* Get all files in source folder */
-	int counter_landscape = max_index_landscape + 1;
-	int counter_upright = max_index_upright + 1;
-	for (const auto& image : locator.GetLockscreenMetadata())
-	{
-		// file not detected as image (jpeg and exif data) or too small image size
-		if (!image.IsValid())
-		{
-			//cout << "File not detected as image (jpeg or exif data) or it is too small (<1000 pixels)\n";
-			continue;
-		}
-
-		std::string folder_name_destination_type = "unset";
-		int current_counter = 0;
-		if (image.IsLandscape()){
-			folder_name_destination_type = folder_name_destination_landscape;
-			current_counter = counter_landscape;
-			counter_landscape++;
-		}
-		else {
-			folder_name_destination_type = folder_name_destination_upright;
-			current_counter = counter_upright;
-			counter_upright++;
-		}
-
-		/* create desired path with file rename */
-		std::ostringstream outStream;
-		outStream << current_working_dir << "\\" << folder_name_destination << "\\" << folder_name_destination_type << "\\" << file_name_generic << current_counter << file_extension;
-		fs::path desired_path = outStream.str();
-
-		/* copy file and add .jpg extension */
-		fs::path source_path = image.GetPath();
-		try {
-			if (fs::copy_file(source_path, desired_path))
-			{
-				//cout << "Image copied: " << desired_path.filename() << "\n";
-			}
-		}
-		catch (fs::filesystem_error & e) {
-			std::cout << " - Could not copy: " << e.what() << '\n';
-			std::cout << "\n!!! Check your Security Programm, it may blocks this program to create files !!!\n\n";
-			std::cout << "Press ENTER to close the window ...";
-			std::cin.get();
-			return 0 ;
-		}
-	}
-
-	std::cout << " - Copied " << (counter_landscape - max_index_landscape - 1) << " images to each folder.\n";
-	std::cout << "\nHave a look! :)\n\n";
+	handler.IntegrateNewLockscreens(locator.GetLockscreenMetadata());
 
 	std::cout << "Press ENTER to close the window ...";
 	std::cin.get();

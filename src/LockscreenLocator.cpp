@@ -6,8 +6,6 @@
 
 #include "LockscreenLocator.h"
 
-namespace fs = std::filesystem;
-
 void LockscreenLocator::Run(void)
 {
     /* replace current user name in source path*/
@@ -15,7 +13,7 @@ void LockscreenLocator::Run(void)
 	std::string username_str{ ConvertWStringToString(username_w) };
 	std::string folder_name_source{ std::regex_replace(folder_name_source_template_, std::regex(user_name_placeholder_), username_str) };
 
-	for (const auto& directory_entry : fs::directory_iterator(folder_name_source))
+	for (const auto& directory_entry : std::filesystem::directory_iterator(folder_name_source))
 	{
 		std::string source_path_string = directory_entry.path().string();
 		source_path_string = std::regex_replace(source_path_string, std::regex("/"), "\\");
