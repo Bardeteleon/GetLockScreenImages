@@ -21,16 +21,6 @@ const std::string folder_name_destination_landscape = "Landscape";
 const std::string file_name_generic = "Image_";
 const std::string file_extension = ".jpg";
 
-std::string ReplaceStringInPlace(const std::string& subject, const std::string& search, const std::string& replace) {
-	size_t pos = 0;
-	std::string result = subject;
-	while ((pos = result.find(search, pos)) != std::string::npos) {
-		result.replace(pos, search.length(), replace);
-		pos += replace.length();
-	}
-	return result;
-}
-
 int find_maximum_image_index(const std::string& rel_path, const std::string& file_name_generic, const std::string& file_extension) {
 	int max_counter = 0;
 	int count_image_existing = 0;
@@ -126,7 +116,7 @@ int main()
 	/* replace current user name in source path*/
 	std::wstring username_w{ GetCurrentWindowsUserName() };
 	std::string username_str{ ConvertWStringToString(username_w) };
-	std::string folder_name_source{ ReplaceStringInPlace(folder_name_source_template, user_name_placeholder, username_str) };
+	std::string folder_name_source{ std::regex_replace(folder_name_source_template, std::regex(user_name_placeholder), username_str) };
 
 	/* get path of .exe */
 	std::string current_working_dir = GetCurrentWorkingDirectory();
@@ -140,7 +130,7 @@ int main()
 	for (const auto& directory_entry : fs::directory_iterator(folder_name_source))
 	{
 		std::string source_path_string = directory_entry.path().string();
-		source_path_string = ReplaceStringInPlace(source_path_string, "/", "\\");
+		source_path_string = std::regex_replace(source_path_string, std::regex("/"), "\\");
 
 		/* try to read image size
 		   continue with next file if:
