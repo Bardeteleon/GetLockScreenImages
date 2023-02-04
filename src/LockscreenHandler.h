@@ -26,11 +26,11 @@ class LockscreenHandler
 
     std::string current_working_directory_{};
 
-    const std::string folder_name_destination = "LockScreens";
-    const std::string folder_name_destination_upright = "Upright";
-    const std::string folder_name_destination_landscape = "Landscape";
-    const std::string file_name_generic = "Image_";
-    const std::string file_extension = ".jpg";
+    const std::string folder_name_destination_{"LockScreens"};
+    const std::string folder_name_destination_upright_{"Upright"};
+    const std::string folder_name_destination_landscape_{"Landscape"};
+    const std::string file_name_generic_{"Image_"};
+    const std::string file_extension_{".jpg"};
 };
 
 #endif

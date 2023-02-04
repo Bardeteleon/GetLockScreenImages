@@ -22,11 +22,11 @@ void LockscreenHandler::DetectCurrentWorkingDirectory(void)
 
 void LockscreenHandler::TryCreateImageDirectories(void)
 {
-	if (CreateDirectoryA(std::string(current_working_directory_ + "\\" + folder_name_destination).c_str(), NULL))
+	if (CreateDirectoryA(std::string(current_working_directory_ + "\\" + folder_name_destination_).c_str(), NULL))
 	{
 		std::cout << " - Created a LockScreens folder next to the .exe\n";
-		if (!CreateDirectoryA(std::string(current_working_directory_ + "\\" + folder_name_destination + "\\" + folder_name_destination_landscape).c_str(), NULL)
-			|| !CreateDirectoryA(std::string(current_working_directory_ + "\\" + folder_name_destination + "\\" + folder_name_destination_upright).c_str(), NULL))
+		if (!CreateDirectoryA(std::string(current_working_directory_ + "\\" + folder_name_destination_ + "\\" + folder_name_destination_landscape_).c_str(), NULL)
+			|| !CreateDirectoryA(std::string(current_working_directory_ + "\\" + folder_name_destination_ + "\\" + folder_name_destination_upright_).c_str(), NULL))
 		{
 			std::cout << " - Error: Not able to create subfolders.";
 			init_success_ = false;
@@ -46,8 +46,8 @@ void LockscreenHandler::TryCreateImageDirectories(void)
 
 void LockscreenHandler::DetectExistingImages(void)
 {
-	max_index_landscape_ = FindMaximumLockscreenIndex(folder_name_destination + "\\" + folder_name_destination_landscape, file_name_generic, file_extension);
-	max_index_upright_ = FindMaximumLockscreenIndex(folder_name_destination + "\\" + folder_name_destination_upright, file_name_generic, file_extension);
+	max_index_landscape_ = FindMaximumLockscreenIndex(folder_name_destination_ + "\\" + folder_name_destination_landscape_, file_name_generic_, file_extension_);
+	max_index_upright_ = FindMaximumLockscreenIndex(folder_name_destination_ + "\\" + folder_name_destination_upright_, file_name_generic_, file_extension_);
 }
 
 int LockscreenHandler::FindMaximumLockscreenIndex(const std::string& rel_path, const std::string& file_name_generic, const std::string& file_extension) {
@@ -95,19 +95,19 @@ void LockscreenHandler::IntegrateNewLockscreens(const std::vector<ImageMetadata>
 		std::string folder_name_destination_type = "unset";
 		int current_counter = 0;
 		if (image.IsLandscape()){
-			folder_name_destination_type = folder_name_destination_landscape;
+			folder_name_destination_type = folder_name_destination_landscape_;
 			current_counter = counter_landscape;
 			counter_landscape++;
 		}
 		else {
-			folder_name_destination_type = folder_name_destination_upright;
+			folder_name_destination_type = folder_name_destination_upright_;
 			current_counter = counter_upright;
 			counter_upright++;
 		}
 
 		/* create desired path with file rename */
 		std::ostringstream outStream;
-		outStream << current_working_directory_ << "\\" << folder_name_destination << "\\" << folder_name_destination_type << "\\" << file_name_generic << current_counter << file_extension;
+		outStream << current_working_directory_ << "\\" << folder_name_destination_ << "\\" << folder_name_destination_type << "\\" << file_name_generic_ << current_counter << file_extension_;
 		std::filesystem::path desired_path = outStream.str();
 
 		/* copy file and add .jpg extension */
