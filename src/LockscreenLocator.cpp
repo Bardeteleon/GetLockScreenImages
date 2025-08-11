@@ -15,17 +15,17 @@ void LockscreenLocator::Run()
 
 void LockscreenLocator::LocatePotentialLockscreens()
 {
-	std::wstring username_w{ GetCurrentWindowsUserName() };
-	std::string username_str{ ConvertWStringToString(username_w) };
-	std::string folder_name_source{ std::regex_replace(folder_name_source_template_, std::regex(user_name_placeholder_), username_str) };
+    std::wstring username_w{ GetCurrentWindowsUserName() };
+    std::string username_str{ ConvertWStringToString(username_w) };
+    std::string folder_name_source{ std::regex_replace(folder_name_source_template_, std::regex(user_name_placeholder_), username_str) };
 
-	for (const auto& directory_entry : std::filesystem::directory_iterator(folder_name_source))
-	{
-		std::string source_path_string = directory_entry.path().string();
-		source_path_string = std::regex_replace(source_path_string, std::regex("/"), "\\");
+    for (const auto& directory_entry : std::filesystem::directory_iterator(folder_name_source))
+    {
+        std::string source_path_string = directory_entry.path().string();
+        source_path_string = std::regex_replace(source_path_string, std::regex("/"), "\\");
 
-		potential_lockscreens_.emplace_back(source_path_string);
-	}
+        potential_lockscreens_.emplace_back(source_path_string);
+    }
 }
 
 void LockscreenLocator::FilterRealLockscreens()
@@ -42,15 +42,15 @@ std::vector<ImageMetadata> LockscreenLocator::GetLockscreenMetadata()
 
 std::wstring LockscreenLocator::GetCurrentWindowsUserName()
 {
-	TCHAR username[UNLEN + 1];
-	DWORD username_len = UNLEN + 1;
-	GetUserName(username, &username_len);
-	std::wstring username_w(&username[0]);
+    TCHAR username[UNLEN + 1];
+    DWORD username_len = UNLEN + 1;
+    GetUserName(username, &username_len);
+    std::wstring username_w(&username[0]);
 
-	return username_w;
+    return username_w;
 }
 
 std::string LockscreenLocator::ConvertWStringToString(const std::wstring& w_string)
 {
-	return std::string(w_string.begin(), w_string.end());
+    return std::string(w_string.begin(), w_string.end());
 }

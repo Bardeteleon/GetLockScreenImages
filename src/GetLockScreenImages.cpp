@@ -4,20 +4,20 @@
 
 int main()
 {
-	std::cout << "Welcome!\n";
-	std::cout << "This program delivers all Windows 10 lockscreen wallpapers it can find in the system.\n";
-	std::cout << "These are the images you see when you log into your computer.\n";
+    std::cout << "Welcome!\n";
+    std::cout << "This program delivers all Windows 10 lockscreen wallpapers it can find in the system.\n";
+    std::cout << "These are the images you see when you log into your computer.\n";
 
-	LockscreenHandler handler{};
-	handler.Init();
+    LockscreenHandler handler{};
+    handler.Init();
 
-	LockscreenLocator locator{};
-	locator.Run();
+    LockscreenLocator locator{};
+    locator.Run();
 
-	handler.IntegrateNewLockscreens(locator.GetLockscreenMetadata());
+    handler.IntegrateNewLockscreens(locator.GetLockscreenMetadata());
 
-	std::cout << "Press ENTER to close the window ...";
-	std::cin.get();
+    std::cout << "Press ENTER to close the window ...";
+    std::cin.get();
 
-	return 0;
+    return 0;
 }
