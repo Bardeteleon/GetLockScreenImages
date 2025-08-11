@@ -7,13 +7,13 @@
 
 #include "LockscreenLocator.h"
 
-void LockscreenLocator::Run(void)
+void LockscreenLocator::Run()
 {
     LocatePotentialLockscreens();
     FilterRealLockscreens();
 }
 
-void LockscreenLocator::LocatePotentialLockscreens(void)
+void LockscreenLocator::LocatePotentialLockscreens()
 {
 	std::wstring username_w{ GetCurrentWindowsUserName() };
 	std::string username_str{ ConvertWStringToString(username_w) };
@@ -28,19 +28,19 @@ void LockscreenLocator::LocatePotentialLockscreens(void)
 	}
 }
 
-void LockscreenLocator::FilterRealLockscreens(void)
+void LockscreenLocator::FilterRealLockscreens()
 {
     potential_lockscreens_.erase(std::remove_if(potential_lockscreens_.begin(), potential_lockscreens_.end(), [](const ImageMetadata& image){
         return !image.IsValid() || image.GetHeight() < 1000 || image.GetWidth() < 1000;
     }), potential_lockscreens_.end());
 }
 
-std::vector<ImageMetadata> LockscreenLocator::GetLockscreenMetadata(void)
+std::vector<ImageMetadata> LockscreenLocator::GetLockscreenMetadata()
 {
     return potential_lockscreens_;
 }
 
-std::wstring LockscreenLocator::GetCurrentWindowsUserName(void)
+std::wstring LockscreenLocator::GetCurrentWindowsUserName()
 {
 	TCHAR username[UNLEN + 1];
 	DWORD username_len = UNLEN + 1;

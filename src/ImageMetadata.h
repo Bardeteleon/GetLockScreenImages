@@ -16,13 +16,13 @@ class ImageMetadata
 
     explicit ImageMetadata(const std::string& path);
 
-    std::string GetPath(void) const { return path_; }
-    Type GetType(void) const { return type_; }
-    std::uint32_t GetHeight(void) const { return height_; }
-    std::uint32_t GetWidth(void) const { return width_; }
+    std::string GetPath() const { return path_; }
+    Type GetType() const { return type_; }
+    std::uint32_t GetHeight() const { return height_; }
+    std::uint32_t GetWidth() const { return width_; }
 
-    bool IsLandscape(void) const { return width_ > height_; }
-    bool IsValid(void) const { return type_ != Type::INVALID; }
+    bool IsLandscape() const { return width_ > height_; }
+    bool IsValid() const { return type_ != Type::INVALID; }
 
   private:
 

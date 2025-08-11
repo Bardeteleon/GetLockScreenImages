@@ -10,16 +10,16 @@ class LockscreenLocator
   public:
     LockscreenLocator() = default;
 
-    void Run(void);
+    void Run();
 
-    std::vector<ImageMetadata> GetLockscreenMetadata(void);
+    std::vector<ImageMetadata> GetLockscreenMetadata();
 
   private:
 
-    void LocatePotentialLockscreens(void);
-    void FilterRealLockscreens(void);
+    void LocatePotentialLockscreens();
+    void FilterRealLockscreens();
 
-    std::wstring GetCurrentWindowsUserName(void);
+    std::wstring GetCurrentWindowsUserName();
     std::string ConvertWStringToString(const std::wstring& w_string);
 
     std::vector<ImageMetadata> potential_lockscreens_;

@@ -5,14 +5,14 @@
 #include <Windows.h>
 #include <sstream>
 
-void LockscreenHandler::Init(void)
+void LockscreenHandler::Init()
 {
     DetectCurrentWorkingDirectory();
     TryCreateImageDirectories();
     DetectExistingImages();
 }
 
-void LockscreenHandler::DetectCurrentWorkingDirectory(void)
+void LockscreenHandler::DetectCurrentWorkingDirectory()
 {
 	TCHAR path[1040]; // MAX_PATH
 	GetCurrentDirectory(sizeof(path), path);
@@ -20,7 +20,7 @@ void LockscreenHandler::DetectCurrentWorkingDirectory(void)
 	current_working_directory_ = local_path.string();
 }
 
-void LockscreenHandler::TryCreateImageDirectories(void)
+void LockscreenHandler::TryCreateImageDirectories()
 {
 	if (CreateDirectoryA(std::string(current_working_directory_ + "\\" + folder_name_destination_).c_str(), NULL))
 	{
@@ -44,7 +44,7 @@ void LockscreenHandler::TryCreateImageDirectories(void)
 	}
 }
 
-void LockscreenHandler::DetectExistingImages(void)
+void LockscreenHandler::DetectExistingImages()
 {
 	max_index_landscape_ = FindMaximumLockscreenIndex(folder_name_destination_ + "\\" + folder_name_destination_landscape_, file_name_generic_, file_extension_);
 	max_index_upright_ = FindMaximumLockscreenIndex(folder_name_destination_ + "\\" + folder_name_destination_upright_, file_name_generic_, file_extension_);

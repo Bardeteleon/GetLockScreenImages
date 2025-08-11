@@ -8,16 +8,16 @@
 class LockscreenHandler
 {
   public:
-    LockscreenHandler(void) = default;
+    LockscreenHandler() = default;
 
-    void Init(void);
+    void Init();
     void IntegrateNewLockscreens(const std::vector<ImageMetadata> lockscreens);
 
   private:
     int FindMaximumLockscreenIndex(const std::string& rel_path, const std::string& file_name_generic, const std::string& file_extension);
-    void DetectCurrentWorkingDirectory(void);
-    void TryCreateImageDirectories(void);
-    void DetectExistingImages(void);
+    void DetectCurrentWorkingDirectory();
+    void TryCreateImageDirectories();
+    void DetectExistingImages();
 
     bool init_success_{false};
 
